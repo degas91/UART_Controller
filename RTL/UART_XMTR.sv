@@ -22,14 +22,15 @@
 //-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //------------------------------------------------------------------------------------------------------------------------------------
 
-//`begin_keywords "1800_2012"
 `resetall
 `default_nettype none
 
-module UART_XMTR #(parameter DATA_WIDTH = 8)(
-    output      logic                  serial_o, busy_o,
-    input  wire logic [DATA_WIDTH-1:0] xmit_data_i,
-    input  wire logic                  start_tx_i, baud_i, clk_i, rst_i);
+module UART_XMTR #(parameter DATA_WIDTH = 8
+    )
+    (   output      logic                  serial_o, busy_o,
+        input  wire logic [DATA_WIDTH-1:0] xmit_data_i,
+        input  wire logic                  start_tx_i, baud_i, clk_i, rst_i
+    );
 
     timeunit 1ns; // delays in nanoseconds
     timeprecision 1ps; // 3 decimal places of precision
@@ -44,16 +45,13 @@ module UART_XMTR #(parameter DATA_WIDTH = 8)(
     // FSM to control the UART transmitter
     // Coded as a single always block FSM
     always_ff @(posedge clk_i) begin
-
         if (rst_i) begin
                                                                                                     state <= TX_IDLE;
             xmit_data       <= '0;
             start_tx_clr    <= '0;
             busy_o          <= '0;
         end else begin
-
                 start_tx_clr    <= '0;
-
                 case (state)
                     // wait for a start transmition pulse
                     TX_IDLE:   if (start_tx == 1)begin
@@ -66,9 +64,9 @@ module UART_XMTR #(parameter DATA_WIDTH = 8)(
                     // of a start bit+ data word + 2x stop bit
                     TX_START: begin
                         start_tx_clr                            <= '1;
-                        xmit_data [0]                           <= '0;                            // Start bit
-                        xmit_data [DATA_WIDTH:1]                <= xmit_data_i;        // 8 bit data word        
-                        xmit_data [DATA_WIDTH+2:DATA_WIDTH+1]   <= '1;    // 2 stop bits
+                        xmit_data [0]                           <= '0;               // Start bit
+                        xmit_data [DATA_WIDTH:1]                <= xmit_data_i;     // 8 bit data word        
+                        xmit_data [DATA_WIDTH+2:DATA_WIDTH+1]   <= '1;             // 2 stop bits
                         busy_o    <= '1;       
                                                                                                     state <= TX_XMIT;  
                             end          
@@ -97,11 +95,18 @@ module UART_XMTR #(parameter DATA_WIDTH = 8)(
     end
     // Rising edge detector to trigger the shift regster on the rising edge of 
     // the baud rate pulse
-    EDGE_TO_PULSE  #(.PULSE_TYPE("redge")) baud_redg_detect(.pulse_o(baud_redg), .edge_i(baud_i), .clk_i(clk_i), .rst_i(rst_i));
+    EDGE_TO_PULSE  #(
+        .PULSE_TYPE("redge")
+        ) 
+    baud_redg_detect(
+        .pulse_o(baud_redg), 
+        .edge_i(baud_i), 
+        .clk_i(clk_i), 
+        .rst_i(rst_i)
+        );
 
     //Transmition start signal latch until the FSM clears it.
     always_ff @(posedge clk_i) begin
-
         if (rst_i) begin
             start_tx <= '0;
         end else begin
@@ -114,5 +119,3 @@ module UART_XMTR #(parameter DATA_WIDTH = 8)(
     assign serial_o = xmit_data [0];
 
 endmodule
-
-//`end_keywords
